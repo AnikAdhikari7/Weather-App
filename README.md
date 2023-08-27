@@ -1,16 +1,15 @@
-# weather_app
+# Weather-App
+This is a basic Weather-App built with Flutter (Dart) following the Material 3 UI. For real-time weather info, I have used the free plan of openweathermap.org API.
 
-A new Flutter project.
+A glimpse of the App:
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+<img
+  src="https://github.com/AnikAdhikari7/Weather-App/assets/90562982/2b96c331-bfb3-4bdd-a776-a296f63fc95c"
+  alt="Weather-App (Light)"
+  title="Weather-App (Light)"
+  style="display: inline-block; margin: 0 auto; width: 183px; height: 400px">
+<img 
+  src="https://github.com/AnikAdhikari7/Weather-App/assets/90562982/b92a4dc1-af1f-4a46-bd01-3b9286e1633e"
+  alt="Weather-App (Dark)"
+  title="Weather-App (Dark)"
+  style="display: inline-block; margin: 0 auto; width: 183px; height: 400px">
