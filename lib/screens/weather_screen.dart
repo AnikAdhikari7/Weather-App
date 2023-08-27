@@ -8,6 +8,13 @@ import 'package:weather_app/items/hourly_forecast_item.dart';
 import 'package:http/http.dart' as http;
 import 'package:weather_app/items/secrets.dart';
 
+String cityName = 'Kolkata';
+
+// function to convert kelvin to celsius
+int kelvinToCelsius(double kelvin) {
+  return (kelvin - 273.15).round();
+}
+
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
 
@@ -16,8 +23,6 @@ class WeatherScreen extends StatefulWidget {
 }
 
 class _WeatherScreenState extends State<WeatherScreen> {
-  String cityName = 'Kolkata';
-
   late Future<Map<String, dynamic>> weather;
 
   Future<Map<String, dynamic>> getCurrentWeather() async {
@@ -59,12 +64,18 @@ class _WeatherScreenState extends State<WeatherScreen> {
         actions: [
           IconButton(
               onPressed: () {
-                setState(() {
-                  weather = getCurrentWeather();
-                });
+                showSearch(context: context, delegate: PlacesSearchDelegate());
               },
-              icon: const Icon(Icons.refresh))
+              icon: const Icon(Icons.search))
         ],
+        leading: IconButton(
+          onPressed: () {
+            setState(() {
+              weather = getCurrentWeather();
+            });
+          },
+          icon: const Icon(Icons.refresh),
+        ),
       ),
       body: FutureBuilder(
         future: weather,
@@ -81,7 +92,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
           final currentWeatherData = data['list'][0];
 
-          final currentTemp = currentWeatherData['main']['temp'];
+          final currentTemp =
+              kelvinToCelsius(currentWeatherData['main']['temp']);
           final currentSky = currentWeatherData['weather'][0]['main'];
           final currentHumidity = currentWeatherData['main']['humidity'];
           final currentWindSpeed = currentWeatherData['wind']['speed'];
@@ -109,7 +121,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                             child: Column(
                               children: [
                                 Text(
-                                  '$currentTemp K',
+                                  '$currentTemp °C',
                                   style: const TextStyle(
                                       fontSize: 32,
                                       fontWeight: FontWeight.bold),
@@ -173,7 +185,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                   // ),
 
                   SizedBox(
-                    height: 273,
+                    height: 255,
                     child: GridView.builder(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
@@ -183,8 +195,8 @@ class _WeatherScreenState extends State<WeatherScreen> {
                       itemBuilder: (context, index) {
                         final hourlyForecast = data['list'][index + 2];
                         final hourlySky = hourlyForecast['weather'][0]['main'];
-                        final hourlyTemp =
-                            hourlyForecast['main']['temp'].toString();
+                        final hourlyTemp = kelvinToCelsius(
+                            hourlyForecast['main']['temp'].toDouble());
                         final hourlyTime =
                             DateTime.parse(hourlyForecast['dt_txt'].toString());
 
@@ -193,7 +205,7 @@ class _WeatherScreenState extends State<WeatherScreen> {
                           icon: hourlySky == 'Clouds' || hourlySky == 'Rain'
                               ? Icons.cloud
                               : Icons.sunny,
-                          temperature: hourlyTemp,
+                          temperature: '$hourlyTemp °C',
                         );
                       },
                     ),
@@ -234,6 +246,78 @@ class _WeatherScreenState extends State<WeatherScreen> {
           );
         },
       ),
+    );
+  }
+}
+
+// search delegate
+class PlacesSearchDelegate extends SearchDelegate {
+  @override
+  List<Widget>? buildActions(BuildContext context) => [
+        IconButton(
+          onPressed: () {
+            if (query.isEmpty) {
+              close(context, null);
+            } else {
+              query = '';
+            }
+          },
+          icon: const Icon(Icons.clear),
+        ),
+      ];
+
+  @override
+  Widget? buildLeading(BuildContext context) {
+    return IconButton(
+      onPressed: () => close(context, null),
+      icon: const Icon(Icons.arrow_back),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    cityName = query.toString();
+
+    // need to call setState() to rebuild the widget tree
+    return const WeatherScreen();
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    if (query.isEmpty) {
+      return const Center(child: Text('Search for a place'));
+    }
+    return FutureBuilder(
+      future: http.get(
+        Uri.parse(
+            'https://api.openweathermap.org/geo/1.0/direct?q=$query&limit=5&appid=$openWeatherAPIKey'),
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator.adaptive());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text(snapshot.error.toString()));
+        }
+
+        final data = jsonDecode(snapshot.data!.body);
+
+        return ListView.builder(
+          itemCount: data.length,
+          itemBuilder: (context, index) {
+            final place = data[index];
+
+            return ListTile(
+              onTap: () {
+                close(context, place['name']);
+              },
+              title: Text(place['name']),
+              subtitle: Text(place['country']),
+            );
+          },
+        );
+      },
     );
   }
 }
